@@ -144,8 +144,8 @@ if __name__ == "__main__":
     learning_rate = 0.01
     n_inputs = X_train.shape[1]
     n_outputs = len(label_names)
-    n_epochs = 200
-    batch_size = 100
+    n_epochs = 250
+    batch_size = 200
 
     print("learning_rate:", learning_rate)
     print("n_epochs:", n_epochs)
@@ -168,16 +168,24 @@ if __name__ == "__main__":
         C1 = tf.layers.conv2d(X, filters = 96, kernel_size = [11, 11], strides = [4, 4],
                               padding = 'same', activation = tf.nn.relu, name = "C1")
 
+        # N1 - Local response normalization
+        N1 = tf.nn.local_response_normalization(C1, depth_radius = 2, bias = 1,
+                                                alpha = 0.00002, beta = 0.75, name = "N2")
+        
         # S2 - Max Pooling
-        S2 = tf.layers.max_pooling2d(C1, pool_size = [3, 3], strides = [2, 2],
+        S2 = tf.layers.max_pooling2d(N1, pool_size = [3, 3], strides = [2, 2],
                                      padding = 'valid', name = "S2")
 
         # C3 - Convolution
         C3 = tf.layers.conv2d(S2, filters = 256, kernel_size = [5, 5], strides = [1, 1],
                               padding = 'same', activation = tf.nn.relu, name = "C3")
 
+        # N3 - Local response normalization
+        N3 = tf.nn.local_response_normalization(C3, depth_radius = 2, bias = 1,
+                                                alpha = 0.00002, beta = 0.75, name = "N2")
+
         # S4 - Max Pooling
-        S4 = tf.layers.max_pooling2d(C3, pool_size = [3, 3], strides = [2, 2],
+        S4 = tf.layers.max_pooling2d(N3, pool_size = [3, 3], strides = [2, 2],
                                      padding = 'valid', name = "S4")
 
         # C5 - Convolution
@@ -195,9 +203,16 @@ if __name__ == "__main__":
         # F8 - Fully Connected
         F8 = tf.layers.dense(C7, units = 256, activation = tf.nn.relu, name = "F8")
 
+        # D8 - Dropout at 50%
+        D8 = tf.layers.dropout(F8, rate = 0.5)
+        
         # F9 - Fully Connected
-        F9 = tf.layers.dense(F8, units = 256, activation = tf.nn.relu, name = "F9")
+        F9 = tf.layers.dense(D8, units = 256, activation = tf.nn.relu, name = "F9")
 
+        # D9 - Dropout at 50%
+        D9 = tf.layers.dropout(F9, rate = 0.5)
+
+        
         # Output - Fully Connected
         logits = tf.layers.dense(F9, units = n_outputs, name = "logits")
 
@@ -230,6 +245,8 @@ if __name__ == "__main__":
     init = tf.global_variables_initializer()
     init_local = tf.local_variables_initializer()
 
+    saver = tf.train.Saver()
+    
     start_time = time.time()
     
     with tf.Session() as sess:
@@ -265,9 +282,13 @@ if __name__ == "__main__":
             print("Epoch:", epoch, "Val precision:", prec_val, "Val recall:", recall_val, "Val accuracy:", accuracy_val)
             print()
 
+            save_path = saver.save(sess, "/home/ivy/Documents/CIFAR-10/AlexNet_model")
+            
         train_writer.close()
         val_writer.close()
-                
+
+        
+        
     print("Time elapsed", (time.time() - start_time)/60, "minutes")
     print()
     
