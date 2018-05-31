@@ -112,6 +112,8 @@ if __name__ == "__main__":
     
     print("Size of batches:", n_batch1, n_batch2, n_batch3, n_batch4, n_batch5)
     print()
+
+    # Pad image 
     
     ## Define training, validation, test datasets
     # Training
@@ -161,60 +163,35 @@ if __name__ == "__main__":
     Y = tf.placeholder(tf.int32, shape = (None), name = "Y")
 
     
-    # AlexNet (-ish)
-    with tf.name_scope("AlexNet"):
+    # LeNet-5
+    with tf.name_scope("LeNet-5"):
 
         # C1 - Convolution
-        C1 = tf.layers.conv2d(X, filters = 96, kernel_size = [11, 11], strides = [4, 4],
-                              padding = 'same', activation = tf.nn.relu, name = "C1")
+        C1 = tf.layers.conv2d(X, filters = 6, kernel_size = 5, strides = 1,
+                                   padding = 'valid', activation = tf.nn.relu, name = "C1")
 
-        # N1 - Local response normalization
-        N1 = tf.nn.local_response_normalization(C1, depth_radius = 2, bias = 1,
-                                                alpha = 0.00002, beta = 0.75, name = "N2")
-        
-        # S2 - Max Pooling
-        S2 = tf.layers.max_pooling2d(N1, pool_size = [3, 3], strides = [2, 2],
-                                     padding = 'valid', name = "S2")
+        # S2 - Average Pooling
+        S2 = tf.layers.max_pooling2d(C1, pool_size = 2, strides = 2,
+                                         padding = 'valid', name = "S2")
 
         # C3 - Convolution
-        C3 = tf.layers.conv2d(S2, filters = 256, kernel_size = [5, 5], strides = [1, 1],
-                              padding = 'same', activation = tf.nn.relu, name = "C3")
+        C3 = tf.layers.conv2d(S2, filters = 16, kernel_size = 5, strides = 1,
+                                   padding = 'valid', activation = tf.nn.relu, name = "C3")
 
-        # N3 - Local response normalization
-        N3 = tf.nn.local_response_normalization(C3, depth_radius = 2, bias = 1,
-                                                alpha = 0.00002, beta = 0.75, name = "N2")
-
-        # S4 - Max Pooling
-        S4 = tf.layers.max_pooling2d(N3, pool_size = [3, 3], strides = [2, 2],
-                                     padding = 'valid', name = "S4")
+        # S4 - Average Pooling
+        S4 = tf.layers.max_pooling2d(C3, pool_size = 2, strides = 2,
+                                         padding = 'valid', name = "S4")
 
         # C5 - Convolution
-        C5 = tf.layers.conv2d(S4, filters = 384, kernel_size = [3, 3], strides = [1, 1],
-                              padding = 'same', activation = tf.nn.relu, name = "C5")
-
-        # C6 - Convolution
-        C6 = tf.layers.conv2d(C5, filters = 384, kernel_size = [3, 3], strides = [1, 1],
-                              padding = 'same', activation = tf.nn.relu, name = "C6")
+        C5 = tf.layers.conv2d(S4, filters = 16, kernel_size = 5, strides = 1,
+                                   padding = 'valid', activation = tf.nn.relu, name = "C5")
         
-        # C7 - Convolution
-        C7 = tf.layers.conv2d(C6, filters = 256, kernel_size = [3, 3], strides = [1, 1],
-                              padding = 'same', activation = tf.nn.relu, name = "C7")
+        F6 = tf.layers.dense(C5, units = 120, activation = tf.nn.relu, name = "F6")
 
-        # F8 - Fully Connected
-        F8 = tf.layers.dense(C7, units = 256, activation = tf.nn.relu, name = "F8")
-
-        # D8 - Dropout at 50%
-        D8 = tf.layers.dropout(F8, rate = 0.5)
-        
-        # F9 - Fully Connected
-        F9 = tf.layers.dense(D8, units = 256, activation = tf.nn.relu, name = "F9")
-
-        # D9 - Dropout at 50%
-        D9 = tf.layers.dropout(F9, rate = 0.5)
-
+        F7 = tf.layers.dense(F6, units = 84, activation = tf.nn.relu, name = "F7")
         
         # Output - Fully Connected
-        logits = tf.layers.dense(F9, units = n_outputs, name = "logits")
+        logits = tf.layers.dense(F7, units = n_outputs, name = "logits")
 
         logits = tf.layers.flatten(logits)
 
@@ -224,7 +201,7 @@ if __name__ == "__main__":
 
     with tf.name_scope("train"):
 
-        optimizer = tf.train.AdamOptimizer(learning_rate)
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         train_op = optimizer.minimize(loss)
 
     with tf.name_scope("eval"):
