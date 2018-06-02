@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import os
 import tensorflow as tf
 import pickle
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 from sklearn.preprocessing import label_binarize
@@ -52,6 +53,42 @@ def reshape_image(X_bx, m, img_size):
 
     return X_bx
 
+def flip_images(X_imgs, Y_labels, img_size):
+
+    X_flip = []
+    Y_flip = []
+
+    tf.reset_default_graph()
+
+    X = tf.placeholder(tf.float32, shape = (img_size, img_size, 3))
+    
+    tf_lr = tf.image.flip_left_right(X)
+    tf_ud = tf.image.flip_up_down(X)
+    #tf_tr = tf.image.transpose_image(X)
+
+    init = tf.global_variables_initializer()
+    
+    with tf.Session() as sess:
+
+        init.run()
+
+        for img in range(len(X_imgs)):
+            flipped = sess.run([tf_lr, tf_ud], feed_dict = {X: X_imgs[img, :, :, :]})
+
+            X_flip.extend(flipped)
+            Y_flip.extend(2 * [Y_labels[img]])
+
+
+    X_flip = np.asarray(X_flip, dtype = np.float32)
+    Y_flip = np.asarray(Y_flip)
+
+    np.random.seed(5423)  
+    indices = np.random.randint(len(X_flip), size = int(0.25 * len(X_flip)))
+    X_flip = X_flip[indices, :, :, :]
+    Y_flip = Y_flip[indices]
+
+    return X_flip, Y_flip
+        
 
 if __name__ == "__main__":
 
@@ -98,7 +135,7 @@ if __name__ == "__main__":
 
     X_tb = reshape_image(X_tb, n_testbatch, img_size)
 
-    # plt.imshow(X_tb[500, :, :])
+    # plt.imshow(X_b1[500, :, :])
     # plt.show()
 
     # Convert list into numpy array
@@ -112,15 +149,20 @@ if __name__ == "__main__":
     
     print("Size of batches:", n_batch1, n_batch2, n_batch3, n_batch4, n_batch5)
     print()
-
-    # Pad image 
     
+    # Flip images    
+    FX_b1, FY_b1 = flip_images(X_b1, Y_b1, img_size)
+    FX_b2, FY_b2 = flip_images(X_b2, Y_b2, img_size)
+    FX_b3, FY_b3 = flip_images(X_b3, Y_b3, img_size)
+    FX_b4, FY_b4 = flip_images(X_b4, Y_b4, img_size)
+    FX_b5, FY_b5 = flip_images(X_b5, Y_b5, img_size)
+        
     ## Define training, validation, test datasets
     # Training
-    X_train = np.concatenate((X_b1, X_b2, X_b3, X_b4))
-    Y_train = np.concatenate((Y_b1, Y_b2, Y_b3, Y_b4))
+    X_train = np.concatenate((X_b1, FX_b1, X_b2, FX_b2, X_b3, FX_b3, X_b4, FX_b4))
+    Y_train = np.concatenate((Y_b1, FY_b1, Y_b2, FY_b2, Y_b3, FY_b3, Y_b4, FY_b4))
 
-    ## For debugging
+    # ## For debugging
     # X_train = X_train[0:200, :]
     # Y_train = Y_train[0:200]
     
@@ -143,11 +185,11 @@ if __name__ == "__main__":
     print()
     
     ## Define parameters
-    learning_rate = 0.01
+    learning_rate = 0.0001
     n_inputs = X_train.shape[1]
     n_outputs = len(label_names)
-    n_epochs = 250
-    batch_size = 200
+    n_epochs = 300
+    batch_size = 50
 
     print("learning_rate:", learning_rate)
     print("n_epochs:", n_epochs)
@@ -163,35 +205,35 @@ if __name__ == "__main__":
     Y = tf.placeholder(tf.int32, shape = (None), name = "Y")
 
     
-    # LeNet-5
-    with tf.name_scope("LeNet-5"):
+    # CNN
+    with tf.name_scope("CNN"):
 
         # C1 - Convolution
-        C1 = tf.layers.conv2d(X, filters = 6, kernel_size = 5, strides = 1,
-                                   padding = 'valid', activation = tf.nn.relu, name = "C1")
+        C1 = tf.layers.conv2d(X, filters = 16, kernel_size = 5, strides = 1,
+                                   padding = 'same', activation = tf.nn.relu, name = "C1")
 
-        # S2 - Average Pooling
+        # S2 - Max Pooling
         S2 = tf.layers.max_pooling2d(C1, pool_size = 2, strides = 2,
                                          padding = 'valid', name = "S2")
 
         # C3 - Convolution
-        C3 = tf.layers.conv2d(S2, filters = 16, kernel_size = 5, strides = 1,
-                                   padding = 'valid', activation = tf.nn.relu, name = "C3")
+        C3 = tf.layers.conv2d(S2, filters = 20, kernel_size = 5, strides = 1,
+                                   padding = 'same', activation = tf.nn.relu, name = "C3")
 
-        # S4 - Average Pooling
+        # S4 - Max Pooling
         S4 = tf.layers.max_pooling2d(C3, pool_size = 2, strides = 2,
                                          padding = 'valid', name = "S4")
 
         # C5 - Convolution
-        C5 = tf.layers.conv2d(S4, filters = 16, kernel_size = 5, strides = 1,
-                                   padding = 'valid', activation = tf.nn.relu, name = "C5")
-        
+        C5 = tf.layers.conv2d(S4, filters = 20, kernel_size = 5, strides = 1,
+                                   padding = 'same', activation = tf.nn.relu, name = "C5")
+
         F6 = tf.layers.dense(C5, units = 120, activation = tf.nn.relu, name = "F6")
 
-        F7 = tf.layers.dense(F6, units = 84, activation = tf.nn.relu, name = "F7")
-        
+        D7 = tf.layers.dropout(F6, rate = 0.5, seed = 1568, name = "D7")
+
         # Output - Fully Connected
-        logits = tf.layers.dense(F7, units = n_outputs, name = "logits")
+        logits = tf.layers.dense(D7, units = n_outputs, name = "logits")
 
         logits = tf.layers.flatten(logits)
 
@@ -201,7 +243,13 @@ if __name__ == "__main__":
 
     with tf.name_scope("train"):
 
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+        # optimizer = tf.train.AdadeltaOptimizer(learning_rate = learning_rate,
+        #                                        rho = 0.0001)
+
+        optimizer = tf.train.RMSPropOptimizer(learning_rate = learning_rate,
+                                              decay = 0.9,
+                                              momentum = 0.2)
+        
         train_op = optimizer.minimize(loss)
 
     with tf.name_scope("eval"):
@@ -213,6 +261,7 @@ if __name__ == "__main__":
         precision, precision_op = tf.metrics.precision(Y, tf.argmax(logits, axis = 1))
         recall, recall_op = tf.metrics.recall(Y, prediction)
 
+        tf.summary.scalar('loss', loss)
         tf.summary.scalar('accuracy', accuracy)
         tf.summary.scalar('precision', precision)
         tf.summary.scalar('recall', recall)
