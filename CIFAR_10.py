@@ -188,7 +188,7 @@ if __name__ == "__main__":
     learning_rate = 0.0001
     n_inputs = X_train.shape[1]
     n_outputs = len(label_names)
-    n_epochs = 300
+    n_epochs = 350
     batch_size = 50
 
     print("learning_rate:", learning_rate)
@@ -230,7 +230,7 @@ if __name__ == "__main__":
 
         F6 = tf.layers.dense(C5, units = 120, activation = tf.nn.relu, name = "F6")
 
-        D7 = tf.layers.dropout(F6, rate = 0.5, seed = 1568, name = "D7")
+        D7 = tf.layers.dropout(F6, rate = 0.6, seed = 1568, name = "D7")
 
         # Output - Fully Connected
         logits = tf.layers.dense(D7, units = n_outputs, name = "logits")
@@ -247,8 +247,8 @@ if __name__ == "__main__":
         #                                        rho = 0.0001)
 
         optimizer = tf.train.RMSPropOptimizer(learning_rate = learning_rate,
-                                              decay = 0.9,
-                                              momentum = 0.2)
+                                              decay = 0.8,
+                                              momentum = 0.3)
         
         train_op = optimizer.minimize(loss)
 
