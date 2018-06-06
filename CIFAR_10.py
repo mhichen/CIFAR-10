@@ -185,10 +185,10 @@ if __name__ == "__main__":
     print()
     
     ## Define parameters
-    learning_rate = 0.0001
+    learning_rate = 0.001
     n_inputs = X_train.shape[1]
     n_outputs = len(label_names)
-    n_epochs = 350
+    n_epochs = 150
     batch_size = 50
 
     print("learning_rate:", learning_rate)
@@ -230,7 +230,7 @@ if __name__ == "__main__":
 
         F6 = tf.layers.dense(C5, units = 120, activation = tf.nn.relu, name = "F6")
 
-        D7 = tf.layers.dropout(F6, rate = 0.7, seed = 1568, name = "D7")
+        D7 = tf.layers.dropout(F6, rate = 0.8, seed = 1568, name = "D7")
 
         # Output - Fully Connected
         logits = tf.layers.dense(D7, units = n_outputs, name = "logits")
@@ -245,9 +245,11 @@ if __name__ == "__main__":
         # optimizer = tf.train.AdadeltaOptimizer(learning_rate = learning_rate,
         #                                        rho = 0.0001)
 
-        optimizer = tf.train.RMSPropOptimizer(learning_rate = learning_rate,
-                                              decay = 0.8,
-                                              momentum = 0.3)
+        # optimizer = tf.train.RMSPropOptimizer(learning_rate = learning_rate,
+        #                                       decay = 0.7,
+        #                                       momentum = 0.3)
+
+        optimizer = tf.train.AdamOptimizer(learning_rate = learning_rate)
         
         train_op = optimizer.minimize(loss)
 
