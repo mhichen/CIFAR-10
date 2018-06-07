@@ -230,7 +230,7 @@ if __name__ == "__main__":
 
         F6 = tf.layers.dense(C5, units = 120, activation = tf.nn.relu, name = "F6")
 
-        D7 = tf.layers.dropout(F6, rate = 0.8, seed = 1568, name = "D7")
+        D7 = tf.layers.dropout(F6, rate = 0.5, seed = 1568, name = "D7")
 
         # Output - Fully Connected
         logits = tf.layers.dense(D7, units = n_outputs, name = "logits")
