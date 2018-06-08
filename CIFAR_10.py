@@ -189,7 +189,7 @@ if __name__ == "__main__":
     learning_rate = 0.001
     n_inputs = X_train.shape[1]
     n_outputs = len(label_names)
-    n_epochs = 150
+    n_epochs = 200
     batch_size = 50
 
     print("learning_rate:", learning_rate)
@@ -229,7 +229,7 @@ if __name__ == "__main__":
         C5 = tf.layers.conv2d(S4, filters = 20, kernel_size = 5, strides = 1,
                                    padding = 'same', activation = tf.nn.relu, name = "C5")
 
-        F6 = tf.layers.dense(C5, units = 120, activation = tf.nn.relu, name = "F6")
+        F6 = tf.layers.dense(C5, units = 80, activation = tf.nn.relu, name = "F6")
 
         D7 = tf.layers.dropout(F6, rate = 0.5, seed = 1568, name = "D7")
 
