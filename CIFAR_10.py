@@ -53,7 +53,7 @@ def reshape_image(X_bx, m, img_size):
 
     return X_bx
 
-def flip_images(X_imgs, Y_labels, img_size):
+def flip_and_translate_images(X_imgs, Y_labels, img_size):
 
     X_flip = []
     Y_flip = []
@@ -63,7 +63,8 @@ def flip_images(X_imgs, Y_labels, img_size):
     X = tf.placeholder(tf.float32, shape = (img_size, img_size, 3))
     
     tf_lr = tf.image.flip_left_right(X)
-    tf_ud = tf.image.flip_up_down(X)
+    tf_tr = tf.contrib.image.translate(X, (2,2))
+    #tf_ud = tf.image.flip_up_down(X)
     #tf_tr = tf.image.transpose_image(X)
 
     init = tf.global_variables_initializer()
@@ -73,7 +74,7 @@ def flip_images(X_imgs, Y_labels, img_size):
         init.run()
 
         for img in range(len(X_imgs)):
-            flipped = sess.run([tf_lr, tf_ud], feed_dict = {X: X_imgs[img, :, :, :]})
+            flipped = sess.run([tf_lr, tf_tr], feed_dict = {X: X_imgs[img, :, :, :]})
 
             X_flip.extend(flipped)
             Y_flip.extend(2 * [Y_labels[img]])
@@ -151,11 +152,11 @@ if __name__ == "__main__":
     print()
     
     # Flip images    
-    FX_b1, FY_b1 = flip_images(X_b1, Y_b1, img_size)
-    FX_b2, FY_b2 = flip_images(X_b2, Y_b2, img_size)
-    FX_b3, FY_b3 = flip_images(X_b3, Y_b3, img_size)
-    FX_b4, FY_b4 = flip_images(X_b4, Y_b4, img_size)
-    FX_b5, FY_b5 = flip_images(X_b5, Y_b5, img_size)
+    FX_b1, FY_b1 = flip_and_translate_images(X_b1, Y_b1, img_size)
+    FX_b2, FY_b2 = flip_and_translate_images(X_b2, Y_b2, img_size)
+    FX_b3, FY_b3 = flip_and_translate_images(X_b3, Y_b3, img_size)
+    FX_b4, FY_b4 = flip_and_translate_images(X_b4, Y_b4, img_size)
+    FX_b5, FY_b5 = flip_and_translate_images(X_b5, Y_b5, img_size)
         
     ## Define training, validation, test datasets
     # Training
